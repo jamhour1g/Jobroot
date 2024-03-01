@@ -2,6 +2,7 @@ package com.jamhour;
 
 import org.javacord.api.DiscordApi;
 import org.javacord.api.DiscordApiBuilder;
+import org.javacord.api.entity.activity.ActivityType;
 import org.javacord.api.entity.intent.Intent;
 
 public class BotLauncher {
@@ -12,6 +13,8 @@ public class BotLauncher {
                 .addIntents(Intent.MESSAGE_CONTENT)
                 .login()
                 .join();
+
+        api.updateActivity(ActivityType.PLAYING, "/jobs");
 
         new FilterJobsByCommand(api);
         new JobsSlashCommand(api);
