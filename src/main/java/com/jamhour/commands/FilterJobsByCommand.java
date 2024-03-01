@@ -1,7 +1,8 @@
-package com.jamhour;
+package com.jamhour.commands;
 
 import com.jamhour.core.Job;
 import com.jamhour.util.JobsProviders;
+import com.jamhour.util.Utilities;
 import org.javacord.api.DiscordApi;
 import org.javacord.api.entity.channel.TextChannel;
 import org.javacord.api.event.interaction.SlashCommandCreateEvent;

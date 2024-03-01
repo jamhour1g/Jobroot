@@ -1,4 +1,4 @@
-package com.jamhour;
+package com.jamhour.util;
 
 import com.jamhour.core.Job;
 import org.javacord.api.entity.message.embed.EmbedBuilder;

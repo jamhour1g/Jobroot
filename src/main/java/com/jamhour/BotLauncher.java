@@ -1,5 +1,7 @@
 package com.jamhour;
 
+import com.jamhour.commands.FilterJobsByCommand;
+import com.jamhour.commands.JobsSlashCommand;
 import org.javacord.api.DiscordApi;
 import org.javacord.api.DiscordApiBuilder;
 import org.javacord.api.entity.activity.ActivityType;
