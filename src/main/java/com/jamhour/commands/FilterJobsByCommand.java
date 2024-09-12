@@ -48,7 +48,9 @@ public class FilterJobsByCommand implements SlashCommandCreateListener {
             return;
         }
 
-        slashCommandInteraction.createImmediateResponder().respond();
+        slashCommandInteraction.createImmediateResponder()
+                .setContent("Filtering jobs...")
+                .respond();
 
         Optional<TextChannel> channelOptional = slashCommandInteraction.getChannel();
         if (channelOptional.isEmpty()) {

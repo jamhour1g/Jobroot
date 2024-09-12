@@ -25,7 +25,9 @@ public class JobsSlashCommand implements SlashCommandCreateListener {
             return;
         }
 
-        slashCommandInteraction.createImmediateResponder().respond();
+        slashCommandInteraction.createImmediateResponder()
+                .setContent("Sending jobs...")
+                .respond();
 
         slashCommandInteraction.getChannel()
                 .ifPresent(channel ->
