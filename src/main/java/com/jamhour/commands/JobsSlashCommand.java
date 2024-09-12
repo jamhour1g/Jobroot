@@ -1,6 +1,6 @@
 package com.jamhour.commands;
 
-import com.jamhour.util.JobsProviders;
+import com.jamhour.util.JobProvidersKt;
 import com.jamhour.util.Utilities;
 import org.javacord.api.DiscordApi;
 import org.javacord.api.event.interaction.SlashCommandCreateEvent;
@@ -29,7 +29,7 @@ public class JobsSlashCommand implements SlashCommandCreateListener {
 
         slashCommandInteraction.getChannel()
                 .ifPresent(channel ->
-                        JobsProviders.getJobs()
+                        JobProvidersKt.getJobsAsCompletableFuture().join()
                                 .forEach(job -> channel.sendMessage(Utilities.convertJobToEmbed(job)))
                 );
 

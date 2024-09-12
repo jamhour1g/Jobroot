@@ -1,7 +1,7 @@
 package com.jamhour.commands;
 
-import com.jamhour.core.Job;
-import com.jamhour.util.JobsProviders;
+import com.jamhour.core.job.Job;
+import com.jamhour.util.JobProvidersKt;
 import com.jamhour.util.Utilities;
 import org.javacord.api.DiscordApi;
 import org.javacord.api.entity.channel.TextChannel;
@@ -41,6 +41,7 @@ public class FilterJobsByCommand implements SlashCommandCreateListener {
 
     @Override
     public void onSlashCommandCreate(SlashCommandCreateEvent slashCommandCreateEvent) {
+
         SlashCommandInteraction slashCommandInteraction = slashCommandCreateEvent.getSlashCommandInteraction();
 
         if (!slashCommandInteraction.getCommandName().equals(COMMAND_NAME)) {
@@ -64,7 +65,7 @@ public class FilterJobsByCommand implements SlashCommandCreateListener {
         slashCommandInteraction.getOptionByName(CONTAINING_SUB_COMMAND_GROUP)
                 .ifPresent(commandInteractionOption -> handleContainingSubCommandGroupFilters(commandInteractionOption, slashCommandInteraction, filters));
 
-        List<Job> filteredJobs = JobsProviders.getJobs();
+        List<Job> filteredJobs = JobProvidersKt.getJobsAsCompletableFuture().join();
         for (Predicate<Job> filter : filters) {
             filteredJobs = filteredJobs
                     .stream()
@@ -146,6 +147,7 @@ public class FilterJobsByCommand implements SlashCommandCreateListener {
         slashCommandInteraction.getArgumentByName(JOB_SALARY_STRING_OPTION)
                 .flatMap(SlashCommandInteractionOption::getStringValue)
                 .ifPresent(jobLocation -> filters.add(job -> job.getJobSalary().toLowerCase().contains(jobLocation.toLowerCase())));
+
     }
 
     private static SlashCommandOption exactlyMatchingSubGroup() {
