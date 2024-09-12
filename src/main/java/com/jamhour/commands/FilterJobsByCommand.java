@@ -20,6 +20,7 @@ public class FilterJobsByCommand implements SlashCommandCreateListener {
 
     private static final String JOB_POSTER_SUB_COMMAND = "job-poster";
     private static final String JOB_SUB_COMMAND = "job";
+    private static final String JOB_DESCRIPTION_STRING_OPTION = "job-description";
     private static final String JOB_TITLE_STRING_OPTION = "job-title";
     private static final String JOB_LOCATION_STRING_OPTION = "job-location";
     private static final String JOB_SALARY_STRING_OPTION = "job-salary";
@@ -113,6 +114,7 @@ public class FilterJobsByCommand implements SlashCommandCreateListener {
         slashCommandInteraction.getArgumentByName(JOB_SALARY_STRING_OPTION)
                 .flatMap(SlashCommandInteractionOption::getStringValue)
                 .ifPresent(jobLocation -> filters.add(job -> job.getJobSalary().equals(jobLocation)));
+
     }
 
     private static void handleContainingSubCommandGroupFilters(SlashCommandInteractionOption slashCommandInteractionOption,
@@ -148,7 +150,11 @@ public class FilterJobsByCommand implements SlashCommandCreateListener {
 
         slashCommandInteraction.getArgumentByName(JOB_SALARY_STRING_OPTION)
                 .flatMap(SlashCommandInteractionOption::getStringValue)
-                .ifPresent(jobLocation -> filters.add(job -> job.getJobSalary().toLowerCase().contains(jobLocation.toLowerCase())));
+                .ifPresent(jobSalary -> filters.add(job -> job.getJobSalary().toLowerCase().contains(jobSalary.toLowerCase())));
+
+        slashCommandInteraction.getArgumentByName(JOB_DESCRIPTION_STRING_OPTION)
+                .flatMap(SlashCommandInteractionOption::getStringValue)
+                .ifPresent(jobDescription -> filters.add(job -> job.getJobDescription().toLowerCase().contains(jobDescription.toLowerCase())));
 
     }
 
@@ -156,7 +162,7 @@ public class FilterJobsByCommand implements SlashCommandCreateListener {
         return SlashCommandOption.createWithOptions(SlashCommandOptionType.SUB_COMMAND_GROUP, EXACTLY_MATCHING_SUB_COMMAND_GROUP, "Find jobs that exactly match your criteria. Get the perfect fit!",
                 List.of(
                         jobPosterCommands(),
-                        jobCommands()
+                        exactlyMatchingJobCommands()
                 )
         );
     }
@@ -165,18 +171,32 @@ public class FilterJobsByCommand implements SlashCommandCreateListener {
         return SlashCommandOption.createWithOptions(SlashCommandOptionType.SUB_COMMAND_GROUP, CONTAINING_SUB_COMMAND_GROUP, "Narrow down your results by searching for specific terms (keywords) within job postings",
                 List.of(
                         jobPosterCommands(),
-                        jobCommands()
+                        containingJobCommands()
                 )
         );
     }
 
-    private static SlashCommandOption jobCommands() {
+    private static SlashCommandOption exactlyMatchingJobCommands() {
         return SlashCommandOption.createWithOptions(SlashCommandOptionType.SUB_COMMAND, JOB_SUB_COMMAND, "Dive into the details of specific job listings.",
-                jobOptions()
+                exactlyMatchingJobOptions()
         );
     }
 
-    private static List<SlashCommandOption> jobOptions() {
+    private static SlashCommandOption containingJobCommands() {
+        return SlashCommandOption.createWithOptions(SlashCommandOptionType.SUB_COMMAND, JOB_SUB_COMMAND, "Dive into the details of specific job listings.",
+                containingJobOptions()
+        );
+    }
+
+    private static List<SlashCommandOption> containingJobOptions() {
+        List<SlashCommandOption> slashCommandOptionArrayList = new ArrayList<>(exactlyMatchingJobOptions());
+        slashCommandOptionArrayList.add(
+                SlashCommandOption.createStringOption(JOB_DESCRIPTION_STRING_OPTION, "Discover roles that contain specific keywords.", false)
+        );
+        return slashCommandOptionArrayList;
+    }
+
+    private static List<SlashCommandOption> exactlyMatchingJobOptions() {
         return List.of(
                 SlashCommandOption.createStringOption(JOB_TITLE_STRING_OPTION, "Zero in on jobs with titles that align with your career path.", false),
                 SlashCommandOption.createStringOption(JOB_LOCATION_STRING_OPTION, "Find opportunities in your preferred areas or those open to remote work.", false),
