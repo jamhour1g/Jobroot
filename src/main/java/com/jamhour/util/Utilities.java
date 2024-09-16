@@ -28,7 +28,7 @@ public final class Utilities {
         );
 
         String salary = job.getJobSalary().isBlank() ? "N/A" : job.getJobSalary();
-        
+
         return new EmbedBuilder()
                 .setTitle(job.getJobTitle())
                 .setAuthor(job.getJobPoster().getPosterName(), jobPosterWebsite, (String) null)
@@ -37,6 +37,7 @@ public final class Utilities {
                 .addInlineField("Job Location", job.getJobLocation())
                 .setUrl(jobURI.toString())
                 .setFooter(job.getJobProvider().getProviderName())
-                .setColor(Color.getHSBColor(hsbValues[0], hsbValues[1], hsbValues[2]));
+                .setColor(Color.getHSBColor(hsbValues[0], hsbValues[1], hsbValues[2]))
+                .setTimestampToNow();
     }
 }
