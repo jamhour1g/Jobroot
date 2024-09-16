@@ -1,20 +1,24 @@
 package com.jamhour.commands;
 
-import com.jamhour.util.JobProvidersKt;
-import com.jamhour.util.Utilities;
+import com.jamhour.core.job.Job;
+import com.jamhour.util.pagination.DiscordPagination;
 import org.javacord.api.DiscordApi;
 import org.javacord.api.event.interaction.SlashCommandCreateEvent;
 import org.javacord.api.interaction.SlashCommand;
 import org.javacord.api.interaction.SlashCommandInteraction;
 import org.javacord.api.listener.interaction.SlashCommandCreateListener;
 
+
 public class JobsSlashCommand implements SlashCommandCreateListener {
-
     public static final String COMMAND_NAME = "jobs";
+    private final DiscordPagination<Job> discordPagination;
 
-    public JobsSlashCommand(DiscordApi api) {
+    public JobsSlashCommand(DiscordApi api, DiscordPagination<Job> discordPagination) {
+        this.discordPagination = discordPagination;
+
         SlashCommand.with(COMMAND_NAME, "Get a list of available jobs.").createGlobal(api);
         api.addSlashCommandCreateListener(this);
+        api.addMessageComponentCreateListener(discordPagination);
     }
 
     @Override
@@ -29,11 +33,7 @@ public class JobsSlashCommand implements SlashCommandCreateListener {
                 .setContent("Sending jobs...")
                 .respond();
 
-        slashCommandInteraction.getChannel()
-                .ifPresent(channel ->
-                        JobProvidersKt.getJobsAsCompletableFuture().join()
-                                .forEach(job -> channel.sendMessage(Utilities.convertJobToEmbed(job)))
-                );
-
+        slashCommandInteraction.getChannel().ifPresent(discordPagination::sendPaginatedMessage);
     }
+
 }
