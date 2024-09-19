@@ -18,7 +18,7 @@ public class JobsSlashCommand implements SlashCommandCreateListener {
 
         SlashCommand.with(COMMAND_NAME, "Get a list of available jobs.").createGlobal(api);
         api.addSlashCommandCreateListener(this);
-        api.addMessageComponentCreateListener(discordPagination);
+        api.addButtonClickListener(discordPagination);
     }
 
     @Override

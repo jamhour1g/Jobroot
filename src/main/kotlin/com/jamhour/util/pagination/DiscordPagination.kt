@@ -1,77 +1,103 @@
 package com.jamhour.util.pagination
 
 import org.javacord.api.entity.channel.TextChannel
-import org.javacord.api.entity.message.Message
 import org.javacord.api.entity.message.MessageBuilder
+import org.javacord.api.entity.message.MessageUpdater
 import org.javacord.api.entity.message.component.ActionRow
 import org.javacord.api.entity.message.component.Button
-import org.javacord.api.entity.message.component.LowLevelComponent
 import org.javacord.api.entity.message.embed.EmbedBuilder
-import org.javacord.api.event.interaction.MessageComponentCreateEvent
-import org.javacord.api.listener.interaction.MessageComponentCreateListener
+import org.javacord.api.event.interaction.ButtonClickEvent
+import org.javacord.api.listener.interaction.ButtonClickListener
 import java.util.concurrent.CompletableFuture
+import java.util.regex.Pattern
 import kotlin.collections.buildList
 
 class DiscordPagination<T>(
     itemPaginator: () -> ItemPaginator<T>,
     private val pageContentConfig: PageContentConfig<T>,
-    private val pageIndexExtractorFromComponentId: (String) -> Int?
-) : MessageComponentCreateListener {
+    private val pageIndexExtractorFromButtonCustomId: (String) -> Int?
+) : ButtonClickListener {
 
     val paginator by lazy { itemPaginator() }
 
-    fun TextChannel.sendPaginatedMessage() = sendPaginatedMessage(0, this)
+    fun TextChannel.sendPaginatedMessage() =
+        paginator[0]
+            ?.createMessageBuilder()
+            ?.send(this) ?: CompletableFuture.completedFuture(null)
 
-    override fun onComponentCreate(event: MessageComponentCreateEvent) {
-        val interaction = event.messageComponentInteraction
-        interaction.acknowledge()
+    private fun MessageUpdater.updateMessage(
+        customId: String
+    ) {
+        removeAllEmbeds()
+        removeAllComponents()
+        removeContent()
 
-        val pageIndex = pageIndexExtractorFromComponentId(interaction.customId) ?: return
+        val pageIndex = pageIndexExtractorFromButtonCustomId(customId) ?: return
 
-        interaction.channel.ifPresent { sendPaginatedMessage(pageIndex, it) }
-
+        applyPageContent(pageIndex)
     }
 
-    private fun sendPaginatedMessage(
-        pageIndex: Int,
-        channel: TextChannel
-    ): CompletableFuture<Message?> =
-        paginator[pageIndex]
-            ?.createMessageBuilder(pageContentConfig)
-            ?.send(channel) ?: CompletableFuture.completedFuture(null)
+    private fun MessageUpdater.applyPageContent(
+        pageIndex: Int
+    ) = paginator[pageIndex]?.run {
+        setContent("You are on page ${pageNum + 1} of $totalPages.")
+        addEmbeds(list.map { pageContentConfig.embedFactory(it) })
+        val components = buildComponents(pageContentConfig)
+        addComponents(ActionRow.of(components))
+    }
+
+    private fun MessageBuilder.applyPageContent(
+        pageIndex: Int
+    ) = paginator[pageIndex]?.run {
+        setContent("You are on page ${pageNum + 1} of $totalPages.")
+        addEmbeds(list.map { pageContentConfig.embedFactory(it) })
+        val components = buildComponents(pageContentConfig)
+        addComponents(ActionRow.of(components))
+    }
+
+    private fun <T> ItemPage<T>.createMessageBuilder() = MessageBuilder().applyPageContent(pageNum)
+
+    override fun onButtonClick(event: ButtonClickEvent) {
+        event.buttonInteraction.apply {
+            message.createUpdater().run {
+                removeAllEmbeds()
+                removeAllComponents()
+                removeContent()
+                updateMessage(customId)
+                applyChanges()
+            }
+            acknowledge()
+        }
+    }
+
 }
 
 data class PageContentConfig<T>(
     val nextIdFactory: (ItemPage<T>) -> String = { "next-page@${it.nextPageNum}" },
     val prevIdFactory: (ItemPage<T>) -> String = { "prev-page@${it.prevPageNum}" },
     val embedFactory: (T) -> EmbedBuilder,
-)
-
-private fun <T> ItemPage<T>.createMessageBuilder(
-    pageContentConfig: PageContentConfig<T>
-) = MessageBuilder().apply {
-    setContent("You are on page ${pageNum + 1} of $totalPages.")
-    addEmbeds(list.map { pageContentConfig.embedFactory(it) })
-    val components = buildList<LowLevelComponent> {
-
-        if (shouldAddPreviousButton()) {
-            add(
-                Button.secondary(
-                    pageContentConfig.prevIdFactory(this@createMessageBuilder),
-                    "Back to Page ${prevPageNum + 1}"
-                )
-            )
-        }
-
-        if (shouldAddNextButton()) {
-            add(
-                Button.success(
-                    pageContentConfig.nextIdFactory(this@createMessageBuilder),
-                    "Go to Page ${nextPageNum + 1}"
-                )
-            )
-        }
-
+) {
+    companion object {
+        val defaultPattern = Pattern.compile("(next|prev)-page@(-1|\\d+)")
     }
-    addComponents(ActionRow.of(components))
+}
+
+private fun <T> ItemPage<T>.buildComponents(pageContentConfig: PageContentConfig<T>) = buildList {
+    if (shouldAddPreviousButton()) {
+        add(
+            Button.secondary(
+                pageContentConfig.prevIdFactory(this@buildComponents),
+                "Back to Page ${prevPageNum + 1}"
+            )
+        )
+    }
+
+    if (shouldAddNextButton()) {
+        add(
+            Button.success(
+                pageContentConfig.nextIdFactory(this@buildComponents),
+                "Go to Page ${nextPageNum + 1}"
+            )
+        )
+    }
 }

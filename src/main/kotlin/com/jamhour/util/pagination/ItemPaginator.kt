@@ -11,15 +11,13 @@ class ItemPaginator<T>(
     val totalPages: Int = ceil(items.size / pageSize.toDouble()).toInt()
     val itemPages: List<ItemPage<T>> = items.generatePages()
 
-    private fun List<T>.generatePages(): List<ItemPage<T>> {
-        return buildList {
-            repeat(totalPages) {
-                val jobs = items.subList(
-                    it * pageSize,
-                    minOf((it + 1) * pageSize, items.size)
-                )
-                add(ItemPage(it, pageSize, jobs))
-            }
+    private fun List<T>.generatePages() = buildList {
+        repeat(totalPages) {
+            val jobs = items.subList(
+                it * pageSize,
+                minOf((it + 1) * pageSize, items.size)
+            )
+            add(ItemPage(it, pageSize, jobs))
         }
     }
 
